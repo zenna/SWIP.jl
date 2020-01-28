@@ -26,10 +26,10 @@ end
 "Project `ω` onto id"
 proj(ω, id) = ΩProj(ω, id)
 
-# Sampling
-"Sample a random ω ∈ Ω"
-sample(::Type{Ω{T}}) where T = Ω(T())
-sample(f) = f(sample(Ω))
+# # Sampling
+# "Sample a random ω ∈ Ω"
+# sample(::Type{Ω{T}}) where T = Ω(T())
+# sample(f) = f(sample(Ω))
 
 # Primitives
 
@@ -65,11 +65,12 @@ function logpdf(rv, ω)
   ld.val
 end
 
-
 function Cassette.posthook(ctx::LogPdfCtx, ret, T::Type{<:Distributions.Distribution}, ωπ::ΩProj, args...)
-  @show ret
-  @show args
+  # @show ωπ.id
+  # println("")
   if ωπ.id ∉ ctx.metadata.seen
+    # @show ret
+    # @show args  
     @show ctx.metadata.val += Distributions.logpdf(T(args...), ret)
     push!(ctx.metadata.seen, ωπ.id)
   end
@@ -77,6 +78,18 @@ function Cassette.posthook(ctx::LogPdfCtx, ret, T::Type{<:Distributions.Distribu
   ret
 end
 
+# This is necessary to compose contexts, in particular logpdf and hadctx
+function Cassette.posthook(ctx::LogPdfCtx, ret, ::typeof(Cassette.overdub), ictx, T::Type{<:Distributions.Distribution}, ωπ::ΩProj, args...)
+  println("")?
+  if ωπ.id ∉ ctx.metadata.seen
+    # @show ret
+    # @show args 
+    @show ctx.metadata.val += Distributions.logpdf(T(args...), ret)
+    push!(ctx.metadata.seen, ωπ.id)
+  end
+  println("")
+  ret
+end
 
 # (Conditional) independence 
 Cassette.@context CIIDCtx # Use cassette to augment enivonrment with extra state
@@ -106,7 +119,6 @@ end
 
 "I.I.D.: `ciid` with nothing shar ed"
 ciid(f, id::ID) = ciid(f, id, ())
-
 ciid(f, id::Integer) = ciid(f, (id,))
 ciid(f, id::Integer, shared) = ciid(f, (id,), shared)
 

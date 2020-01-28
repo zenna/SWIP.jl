@@ -20,8 +20,10 @@ function Cassette.overdub(ctx::HadCtx{Intervention{X, V}}, x::X, ω::Ω) where {
   @show ω
   @show ctx.metadata.v
   if x == ctx.metadata.x
+    @show :true
     ctx.metadata.v
   else
+    @show :false
     Cassette.recurse(ctx, x, ω)
   end
 end
